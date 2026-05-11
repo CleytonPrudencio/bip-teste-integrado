@@ -1,0 +1,15 @@
+{
+  "/api": {
+    "target": "http://localhost:8080",
+    "secure": false,
+    "logLevel": "debug"
+  },
+  "/swagger-ui": {
+    "target": "http://localhost:8080",
+    "secure": false
+  },
+  "/v3": {
+    "target": "http://localhost:8080",
+    "secure": false
+  }
+}

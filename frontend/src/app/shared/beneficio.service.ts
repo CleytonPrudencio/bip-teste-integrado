@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 import {
   Beneficio,
   BeneficioRequest,
+  BeneficioStats,
   Page,
   TransferRequest,
   TransferResponse,
@@ -45,8 +46,17 @@ export class BeneficioService {
     return this.http.post<TransferResponse>(`${this.baseUrl}/transferencias`, payload);
   }
 
-  historico(page = 0, size = 20): Observable<Page<TransferenciaHistorico>> {
-    const params = new HttpParams().set('page', page).set('size', size);
+  historico(opts: { page?: number; size?: number; beneficioId?: number | null } = {}): Observable<Page<TransferenciaHistorico>> {
+    let params = new HttpParams()
+      .set('page', opts.page ?? 0)
+      .set('size', opts.size ?? 20);
+    if (opts.beneficioId !== null && opts.beneficioId !== undefined) {
+      params = params.set('beneficioId', opts.beneficioId);
+    }
     return this.http.get<Page<TransferenciaHistorico>>(`${this.baseUrl}/transferencias`, { params });
+  }
+
+  stats(id: number): Observable<BeneficioStats> {
+    return this.http.get<BeneficioStats>(`${this.baseUrl}/beneficios/${id}/stats`);
   }
 }

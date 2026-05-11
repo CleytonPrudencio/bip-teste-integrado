@@ -2,7 +2,11 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.BeneficioRequest;
 import com.example.backend.dto.BeneficioResponse;
+import com.example.backend.dto.BeneficioStatsResponse;
 import com.example.backend.service.BeneficioService;
+import com.example.backend.service.TransferService;
+
+import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,9 +34,11 @@ import java.net.URI;
 public class BeneficioController {
 
     private final BeneficioService service;
+    private final TransferService transferService;
 
-    public BeneficioController(BeneficioService service) {
+    public BeneficioController(BeneficioService service, TransferService transferService) {
         this.service = service;
+        this.transferService = transferService;
     }
 
     @GetMapping
@@ -87,5 +93,24 @@ public class BeneficioController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/{id}/stats")
+    @Operation(summary = "Estatisticas agregadas de transferencias do beneficio")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "404", description = "Beneficio nao encontrado")
+    })
+    public BeneficioStatsResponse stats(@PathVariable Long id) {
+        service.findById(id);
+        BigDecimal enviado = transferService.totalEnviado(id);
+        BigDecimal recebido = transferService.totalRecebido(id);
+        return new BeneficioStatsResponse(
+                id,
+                enviado,
+                recebido,
+                recebido.subtract(enviado),
+                transferService.contarTransferencias(id)
+        );
     }
 }

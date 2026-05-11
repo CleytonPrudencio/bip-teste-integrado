@@ -16,7 +16,8 @@ import { ConfirmComponent } from './shared/confirm.component';
         </h1>
         <nav>
           <a routerLink="/beneficios" routerLinkActive="active">Beneficios</a>
-          <a routerLink="/transferencias" routerLinkActive="active">Transferencias</a>
+          <a routerLink="/transferencias" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Transferencias</a>
+          <a routerLink="/transferencias/historico" routerLinkActive="active">Historico</a>
         </nav>
       </div>
     </header>

@@ -126,6 +126,52 @@ class TransferControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/transferencias?beneficioId={id} deve filtrar por beneficio")
+    void historicoFiltraPorBeneficio() throws Exception {
+        long a = criarBeneficio("Filtro A", new BigDecimal("500.00"));
+        long b = criarBeneficio("Filtro B", new BigDecimal("500.00"));
+        long c = criarBeneficio("Filtro C", new BigDecimal("500.00"));
+
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TransferRequest(a, b, new BigDecimal("10.00")))))
+                .andExpect(status().isOk());
+
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TransferRequest(b, c, new BigDecimal("20.00")))))
+                .andExpect(status().isOk());
+
+        mvc().perform(get("/api/v1/transferencias").param("beneficioId", String.valueOf(c)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].toId").value((int) c));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/beneficios/{id}/stats deve retornar agregados de transferencias")
+    void statsAgregaTransferencias() throws Exception {
+        long a = criarBeneficio("Stats A", new BigDecimal("1000.00"));
+        long b = criarBeneficio("Stats B", new BigDecimal("500.00"));
+
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TransferRequest(a, b, new BigDecimal("100.00")))))
+                .andExpect(status().isOk());
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TransferRequest(b, a, new BigDecimal("30.00")))))
+                .andExpect(status().isOk());
+
+        mvc().perform(get("/api/v1/beneficios/" + a + "/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalEnviado").value(100.00))
+                .andExpect(jsonPath("$.totalRecebido").value(30.00))
+                .andExpect(jsonPath("$.saldoLiquido").value(-70.00))
+                .andExpect(jsonPath("$.totalTransferencias").value(2));
+    }
+
+    @Test
     @DisplayName("GET /api/v1/transferencias deve listar historico paginado e ordenado por executadoEm DESC")
     void historicoListaTransferencias() throws Exception {
         long a = criarBeneficio("Hist A", new BigDecimal("1000.00"));

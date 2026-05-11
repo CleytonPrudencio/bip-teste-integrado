@@ -64,4 +64,29 @@ describe('BeneficioService', () => {
     expect(req.request.body).toEqual({ fromId: 1, toId: 2, amount: 50 });
     req.flush({});
   });
+
+  it('historico sem beneficioId deve listar paginado', () => {
+    service.historico({ page: 1, size: 5 }).subscribe();
+    const req = httpMock.expectOne(
+      (r) => r.url === `${baseUrl}/transferencias` && r.params.get('page') === '1'
+    );
+    expect(req.request.params.has('beneficioId')).toBeFalse();
+    req.flush({ content: [], totalElements: 0, totalPages: 0, number: 1, size: 5 });
+  });
+
+  it('historico com beneficioId deve passar como query param', () => {
+    service.historico({ beneficioId: 7, page: 0, size: 10 }).subscribe();
+    const req = httpMock.expectOne(
+      (r) => r.url === `${baseUrl}/transferencias` && r.params.get('beneficioId') === '7'
+    );
+    expect(req.request.params.get('beneficioId')).toBe('7');
+    req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 });
+  });
+
+  it('stats deve buscar /beneficios/{id}/stats', () => {
+    service.stats(42).subscribe();
+    const req = httpMock.expectOne(`${baseUrl}/beneficios/42/stats`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ beneficioId: 42, totalEnviado: 0, totalRecebido: 0, saldoLiquido: 0, totalTransferencias: 0 });
+  });
 });

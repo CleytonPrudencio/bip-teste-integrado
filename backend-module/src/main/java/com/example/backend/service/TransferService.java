@@ -34,8 +34,26 @@ public class TransferService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransferenciaHistoricoResponse> listarHistorico(Pageable pageable) {
-        return historicoRepository.findAll(pageable).map(TransferenciaHistoricoResponse::from);
+    public Page<TransferenciaHistoricoResponse> listarHistorico(Long beneficioId, Pageable pageable) {
+        Page<com.example.backend.domain.TransferenciaHistorico> page = beneficioId == null
+                ? historicoRepository.findAll(pageable)
+                : historicoRepository.findByBeneficioId(beneficioId, pageable);
+        return page.map(TransferenciaHistoricoResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal totalEnviado(Long beneficioId) {
+        return historicoRepository.totalEnviado(beneficioId);
+    }
+
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal totalRecebido(Long beneficioId) {
+        return historicoRepository.totalRecebido(beneficioId);
+    }
+
+    @Transactional(readOnly = true)
+    public long contarTransferencias(Long beneficioId) {
+        return historicoRepository.contarTransferencias(beneficioId);
     }
 
     @Transactional(

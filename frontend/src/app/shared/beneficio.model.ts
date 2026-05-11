@@ -48,3 +48,11 @@ export interface TransferenciaHistorico {
   toValorFinal: number;
   executadoEm: string;
 }
+
+export interface BeneficioStats {
+  beneficioId: number;
+  totalEnviado: number;
+  totalRecebido: number;
+  saldoLiquido: number;
+  totalTransferencias: number;
+}

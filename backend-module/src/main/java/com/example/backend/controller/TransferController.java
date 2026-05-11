@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -44,11 +45,13 @@ public class TransferController {
     }
 
     @GetMapping
-    @Operation(summary = "Lista paginada do historico de transferencias (mais recentes primeiro)")
+    @Operation(summary = "Lista paginada do historico de transferencias (mais recentes primeiro). " +
+            "Pode filtrar por beneficioId (origem OU destino).")
     @ApiResponses(@ApiResponse(responseCode = "200", description = "OK"))
     public Page<TransferenciaHistoricoResponse> historico(
+            @RequestParam(required = false) Long beneficioId,
             @PageableDefault(size = 20, sort = "executadoEm", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return service.listarHistorico(pageable);
+        return service.listarHistorico(beneficioId, pageable);
     }
 }

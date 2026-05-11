@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 import { Beneficio, TransferenciaHistorico, TransferResponse } from '../shared/beneficio.model';
 import { BeneficioService } from '../shared/beneficio.service';
@@ -119,6 +120,7 @@ export class TransferenciaComponent implements OnInit {
   private readonly service = inject(BeneficioService);
   private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
 
   readonly beneficios = signal<Beneficio[]>([]);
   readonly executando = signal<boolean>(false);
@@ -142,6 +144,14 @@ export class TransferenciaComponent implements OnInit {
   ngOnInit(): void {
     this.carregarBeneficios();
     this.carregarHistorico();
+
+    const fromParam = this.route.snapshot.queryParamMap.get('fromId');
+    if (fromParam) {
+      const id = Number(fromParam);
+      if (!Number.isNaN(id)) {
+        this.form.patchValue({ fromId: id });
+      }
+    }
   }
 
   carregarBeneficios(): void {
@@ -150,7 +160,7 @@ export class TransferenciaComponent implements OnInit {
 
   carregarHistorico(): void {
     this.carregandoHistorico.set(true);
-    this.service.historico(0, 10).subscribe({
+    this.service.historico({ page: 0, size: 10 }).subscribe({
       next: (page) => {
         this.historico.set(page.content);
         this.carregandoHistorico.set(false);

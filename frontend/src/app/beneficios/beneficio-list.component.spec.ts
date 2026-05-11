@@ -26,7 +26,7 @@ describe('BeneficioListComponent', () => {
 
   afterEach(() => httpMock.verify());
 
-  it('deve carregar beneficios na inicializacao', () => {
+  it('deve carregar beneficios paginados na inicializacao', () => {
     fixture.detectChanges();
     const req = httpMock.expectOne(
       (r) => r.url === `${environment.apiUrl}/api/v1/beneficios` && r.method === 'GET'
@@ -36,24 +36,58 @@ describe('BeneficioListComponent', () => {
       totalElements: 1,
       totalPages: 1,
       number: 0,
-      size: 100
+      size: 10
     });
 
     expect(fixture.componentInstance.beneficios()).toEqual([
       { id: 1, nome: 'A', descricao: 'desc', valor: 100, ativo: true, version: 0 }
     ]);
+    expect(fixture.componentInstance.totalElements()).toBe(1);
     expect(fixture.componentInstance.loading()).toBeFalse();
   });
 
-  it('deve renderizar mensagem de empty state quando lista vazia', () => {
+  it('deve recarregar ao mudar de pagina', () => {
     fixture.detectChanges();
-    const req = httpMock.expectOne(
-      (r) => r.url === `${environment.apiUrl}/api/v1/beneficios`
-    );
-    req.flush({ content: [], totalElements: 0, totalPages: 0, number: 0, size: 100 });
-    fixture.detectChanges();
+    httpMock.expectOne((r) => r.url === `${environment.apiUrl}/api/v1/beneficios`).flush({
+      content: [], totalElements: 0, totalPages: 0, number: 0, size: 10
+    });
 
-    const compiled: HTMLElement = fixture.nativeElement;
-    expect(compiled.textContent).toContain('Nenhum beneficio cadastrado');
+    fixture.componentInstance.onPageChange(2);
+    const req = httpMock.expectOne((r) =>
+      r.url === `${environment.apiUrl}/api/v1/beneficios` && r.params.get('page') === '2'
+    );
+    expect(req.request.params.get('page')).toBe('2');
+    req.flush({ content: [], totalElements: 0, totalPages: 0, number: 2, size: 10 });
+  });
+
+  it('filtra por busca por nome aplicada localmente', () => {
+    fixture.detectChanges();
+    httpMock.expectOne((r) => r.url === `${environment.apiUrl}/api/v1/beneficios`).flush({
+      content: [
+        { id: 1, nome: 'Vale alimentacao', descricao: null, valor: 100, ativo: true, version: 0 },
+        { id: 2, nome: 'Vale transporte', descricao: null, valor: 50, ativo: true, version: 0 },
+        { id: 3, nome: 'Plano de saude', descricao: null, valor: 200, ativo: true, version: 0 }
+      ],
+      totalElements: 3, totalPages: 1, number: 0, size: 10
+    });
+
+    fixture.componentInstance.onSearch('vale');
+    expect(fixture.componentInstance.filtrados().length).toBe(2);
+    expect(fixture.componentInstance.filtrados()[0].nome).toContain('Vale');
+  });
+
+  it('filtra por status', () => {
+    fixture.detectChanges();
+    httpMock.expectOne((r) => r.url === `${environment.apiUrl}/api/v1/beneficios`).flush({
+      content: [
+        { id: 1, nome: 'A', descricao: null, valor: 100, ativo: true, version: 0 },
+        { id: 2, nome: 'B', descricao: null, valor: 50, ativo: false, version: 0 }
+      ],
+      totalElements: 2, totalPages: 1, number: 0, size: 10
+    });
+
+    fixture.componentInstance.onStatusChange('inativos');
+    expect(fixture.componentInstance.filtrados().length).toBe(1);
+    expect(fixture.componentInstance.filtrados()[0].ativo).toBeFalse();
   });
 });

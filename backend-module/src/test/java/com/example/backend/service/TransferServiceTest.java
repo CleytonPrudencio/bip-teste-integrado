@@ -6,11 +6,14 @@ import com.example.backend.dto.TransferResponse;
 import com.example.backend.exception.InsufficientBalanceException;
 import com.example.backend.exception.InvalidTransferException;
 import com.example.backend.exception.ResourceNotFoundException;
+import com.example.backend.domain.TransferenciaHistorico;
 import com.example.backend.repository.BeneficioRepository;
+import com.example.backend.repository.TransferenciaHistoricoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +23,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +33,9 @@ class TransferServiceTest {
 
     @Mock
     private BeneficioRepository repository;
+
+    @Mock
+    private TransferenciaHistoricoRepository historicoRepository;
 
     @InjectMocks
     private TransferService service;
@@ -54,6 +63,38 @@ class TransferServiceTest {
         assertThat(to.getValor()).isEqualByComparingTo("750.50");
         assertThat(response.fromValorFinal()).isEqualByComparingTo("749.50");
         assertThat(response.toValorFinal()).isEqualByComparingTo("750.50");
+    }
+
+    @Test
+    @DisplayName("transfer salva entrada no historico apos sucesso")
+    void transferSalvaHistorico() {
+        when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(from));
+        when(repository.findByIdForUpdate(2L)).thenReturn(Optional.of(to));
+
+        service.transfer(new TransferRequest(1L, 2L, new BigDecimal("100.00")));
+
+        ArgumentCaptor<TransferenciaHistorico> captor = ArgumentCaptor.forClass(TransferenciaHistorico.class);
+        verify(historicoRepository).save(captor.capture());
+        TransferenciaHistorico h = captor.getValue();
+        assertThat(h.getFromId()).isEqualTo(1L);
+        assertThat(h.getFromNome()).isEqualTo("Origem");
+        assertThat(h.getToId()).isEqualTo(2L);
+        assertThat(h.getToNome()).isEqualTo("Destino");
+        assertThat(h.getAmount()).isEqualByComparingTo("100.00");
+        assertThat(h.getFromValorFinal()).isEqualByComparingTo("900.00");
+        assertThat(h.getToValorFinal()).isEqualByComparingTo("600.00");
+    }
+
+    @Test
+    @DisplayName("transfer nao persiste historico quando ha saldo insuficiente")
+    void transferFalhaNaoSalvaHistorico() {
+        when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(from));
+        when(repository.findByIdForUpdate(2L)).thenReturn(Optional.of(to));
+
+        assertThatThrownBy(() -> service.transfer(new TransferRequest(1L, 2L, new BigDecimal("9999.99"))))
+                .isInstanceOf(InsufficientBalanceException.class);
+
+        verify(historicoRepository, never()).save(any());
     }
 
     @Test

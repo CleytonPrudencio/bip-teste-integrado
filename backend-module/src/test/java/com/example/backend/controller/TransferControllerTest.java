@@ -18,6 +18,8 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -121,5 +123,31 @@ class TransferControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/transferencias deve listar historico paginado e ordenado por executadoEm DESC")
+    void historicoListaTransferencias() throws Exception {
+        long a = criarBeneficio("Hist A", new BigDecimal("1000.00"));
+        long b = criarBeneficio("Hist B", new BigDecimal("100.00"));
+
+        TransferRequest req = new TransferRequest(a, b, new BigDecimal("50.00"));
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isOk());
+
+        mvc().perform(post("/api/v1/transferencias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new TransferRequest(a, b, new BigDecimal("25.00")))))
+                .andExpect(status().isOk());
+
+        mvc().perform(get("/api/v1/transferencias"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(greaterThanOrEqualTo(2)))
+                .andExpect(jsonPath("$.content[0].fromNome").exists())
+                .andExpect(jsonPath("$.content[0].toNome").exists())
+                .andExpect(jsonPath("$.content[0].amount").exists())
+                .andExpect(jsonPath("$.content[0].executadoEm").exists());
     }
 }

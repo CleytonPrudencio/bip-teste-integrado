@@ -36,3 +36,15 @@ export interface Page<T> {
   number: number;
   size: number;
 }
+
+export interface TransferenciaHistorico {
+  id: number;
+  fromId: number;
+  fromNome: string;
+  toId: number;
+  toNome: string;
+  amount: number;
+  fromValorFinal: number;
+  toValorFinal: number;
+  executadoEm: string;
+}

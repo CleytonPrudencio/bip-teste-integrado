@@ -1,12 +1,17 @@
 package com.example.backend.service;
 
 import com.example.backend.domain.Beneficio;
+import com.example.backend.domain.TransferenciaHistorico;
 import com.example.backend.dto.TransferRequest;
 import com.example.backend.dto.TransferResponse;
+import com.example.backend.dto.TransferenciaHistoricoResponse;
 import com.example.backend.exception.InsufficientBalanceException;
 import com.example.backend.exception.InvalidTransferException;
 import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.repository.BeneficioRepository;
+import com.example.backend.repository.TransferenciaHistoricoRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,9 +25,17 @@ import java.time.OffsetDateTime;
 public class TransferService {
 
     private final BeneficioRepository repository;
+    private final TransferenciaHistoricoRepository historicoRepository;
 
-    public TransferService(BeneficioRepository repository) {
+    public TransferService(BeneficioRepository repository,
+                           TransferenciaHistoricoRepository historicoRepository) {
         this.repository = repository;
+        this.historicoRepository = historicoRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TransferenciaHistoricoResponse> listarHistorico(Pageable pageable) {
+        return historicoRepository.findAll(pageable).map(TransferenciaHistoricoResponse::from);
     }
 
     @Transactional(
@@ -58,13 +71,20 @@ public class TransferService {
         from.setValor(from.getValor().subtract(amount).setScale(2, RoundingMode.HALF_UP));
         to.setValor(to.getValor().add(amount).setScale(2, RoundingMode.HALF_UP));
 
+        OffsetDateTime executadoEm = OffsetDateTime.now();
+        historicoRepository.save(new TransferenciaHistorico(
+                from.getId(), from.getNome(),
+                to.getId(), to.getNome(),
+                amount, from.getValor(), to.getValor(), executadoEm
+        ));
+
         return new TransferResponse(
                 from.getId(),
                 to.getId(),
                 amount,
                 from.getValor(),
                 to.getValor(),
-                OffsetDateTime.now()
+                executadoEm
         );
     }
 

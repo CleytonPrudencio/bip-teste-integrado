@@ -8,7 +8,8 @@ import {
   BeneficioRequest,
   Page,
   TransferRequest,
-  TransferResponse
+  TransferResponse,
+  TransferenciaHistorico
 } from './beneficio.model';
 
 @Injectable({ providedIn: 'root' })
@@ -42,5 +43,10 @@ export class BeneficioService {
 
   transfer(payload: TransferRequest): Observable<TransferResponse> {
     return this.http.post<TransferResponse>(`${this.baseUrl}/transferencias`, payload);
+  }
+
+  historico(page = 0, size = 20): Observable<Page<TransferenciaHistorico>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<TransferenciaHistorico>>(`${this.baseUrl}/transferencias`, { params });
   }
 }

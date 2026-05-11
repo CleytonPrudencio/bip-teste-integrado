@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ToastComponent } from './shared/toast.component';
+import { ConfirmComponent } from './shared/confirm.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, ToastComponent],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, ToastComponent, ConfirmComponent],
   template: `
     <header class="app-header">
       <div class="container header-content">
@@ -25,6 +26,7 @@ import { ToastComponent } from './shared/toast.component';
     </main>
 
     <app-toast></app-toast>
+    <app-confirm></app-confirm>
   `,
   styles: [`
     .app-header {

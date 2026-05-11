@@ -5,24 +5,28 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { BeneficioService } from '../shared/beneficio.service';
 import { ToastService } from '../shared/toast.service';
+import { CurrencyMaskDirective } from '../shared/currency-mask.directive';
+import { IconComponent } from '../shared/icon.component';
 
 @Component({
   selector: 'app-beneficio-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, CurrencyMaskDirective, IconComponent],
   template: `
-    <section class="header-row">
+    <section class="page-header">
       <div>
         <h2>{{ isEdit() ? 'Editar beneficio' : 'Novo beneficio' }}</h2>
         <p class="muted">Preencha os dados abaixo para {{ isEdit() ? 'atualizar' : 'criar' }} um beneficio.</p>
       </div>
-      <a class="btn-secondary" routerLink="/beneficios" role="button">Voltar</a>
+      <a class="btn-secondary" routerLink="/beneficios">
+        Voltar
+      </a>
     </section>
 
     <form class="card" [formGroup]="form" (ngSubmit)="salvar()">
       <div class="field">
         <label for="nome">Nome *</label>
-        <input id="nome" type="text" formControlName="nome" maxlength="100" />
+        <input id="nome" type="text" formControlName="nome" maxlength="100" placeholder="Ex.: Vale alimentacao" />
         @if (errorOf('nome'); as err) {
           <div class="field-error">{{ err }}</div>
         }
@@ -30,7 +34,8 @@ import { ToastService } from '../shared/toast.service';
 
       <div class="field">
         <label for="descricao">Descricao</label>
-        <textarea id="descricao" rows="3" formControlName="descricao" maxlength="255"></textarea>
+        <textarea id="descricao" rows="3" formControlName="descricao" maxlength="255"
+                  placeholder="Descricao opcional do beneficio"></textarea>
         @if (errorOf('descricao'); as err) {
           <div class="field-error">{{ err }}</div>
         }
@@ -39,7 +44,10 @@ import { ToastService } from '../shared/toast.service';
       <div class="row">
         <div class="field">
           <label for="valor">Valor *</label>
-          <input id="valor" type="number" step="0.01" min="0" formControlName="valor" />
+          <div class="input-group">
+            <span class="input-prefix">R$</span>
+            <input id="valor" type="text" appCurrencyMask formControlName="valor" placeholder="0,00" />
+          </div>
           @if (errorOf('valor'); as err) {
             <div class="field-error">{{ err }}</div>
           }
@@ -56,24 +64,14 @@ import { ToastService } from '../shared/toast.service';
 
       <div class="actions" style="margin-top: 1rem;">
         <button type="submit" class="btn-primary" [disabled]="form.invalid || saving()">
-          @if (saving()) { <span class="spinner"></span> } Salvar
+          @if (saving()) { <span class="spinner"></span> }
+          <app-icon name="check-circle"></app-icon>
+          Salvar
         </button>
-        <a class="btn-secondary" routerLink="/beneficios" role="button">Cancelar</a>
+        <a class="btn-secondary" routerLink="/beneficios">Cancelar</a>
       </div>
     </form>
-  `,
-  styles: [`
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-    }
-    h2 { margin: 0 0 0.25rem 0; font-size: 1.5rem; }
-    .actions { display: flex; gap: 0.5rem; align-items: center; }
-  `]
+  `
 })
 export class BeneficioFormComponent implements OnInit {
   private readonly service = inject(BeneficioService);

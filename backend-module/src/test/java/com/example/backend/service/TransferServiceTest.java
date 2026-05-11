@@ -115,13 +115,17 @@ class TransferServiceTest {
     }
 
     @Test
-    @DisplayName("transfer lanca InsufficientBalanceException quando saldo insuficiente")
+    @DisplayName("transfer lanca InsufficientBalanceException com nome do beneficio e valor BRL formatado")
     void transferSaldoInsuficiente() {
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(from));
         when(repository.findByIdForUpdate(2L)).thenReturn(Optional.of(to));
 
         assertThatThrownBy(() -> service.transfer(new TransferRequest(1L, 2L, new BigDecimal("9999.99"))))
-                .isInstanceOf(InsufficientBalanceException.class);
+                .isInstanceOf(InsufficientBalanceException.class)
+                .hasMessageContaining("Origem")
+                .hasMessageContaining("R$ 1.000,00")
+                .hasMessageContaining("R$ 9.999,99")
+                .hasMessageNotContaining("id=");
     }
 
     @Test
@@ -144,7 +148,7 @@ class TransferServiceTest {
     }
 
     @Test
-    @DisplayName("transfer rejeita beneficio inativo")
+    @DisplayName("transfer rejeita beneficio inativo com mensagem amigavel contendo nome")
     void transferBeneficioInativo() {
         from.setAtivo(false);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(from));
@@ -152,6 +156,8 @@ class TransferServiceTest {
 
         assertThatThrownBy(() -> service.transfer(new TransferRequest(1L, 2L, BigDecimal.TEN)))
                 .isInstanceOf(InvalidTransferException.class)
-                .hasMessageContaining("inativo");
+                .hasMessageContaining("Origem")
+                .hasMessageContaining("inativo")
+                .hasMessageNotContaining("id=");
     }
 }

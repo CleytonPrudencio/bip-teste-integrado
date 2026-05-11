@@ -7,6 +7,14 @@ public class ResourceNotFoundException extends RuntimeException {
     }
 
     public static ResourceNotFoundException ofBeneficio(Long id) {
-        return new ResourceNotFoundException("Beneficio nao encontrado: id=" + id);
+        return new ResourceNotFoundException("Beneficio nao encontrado.");
+    }
+
+    public static ResourceNotFoundException ofBeneficioOrigem() {
+        return new ResourceNotFoundException("Beneficio de origem nao encontrado.");
+    }
+
+    public static ResourceNotFoundException ofBeneficioDestino() {
+        return new ResourceNotFoundException("Beneficio de destino nao encontrado.");
     }
 }

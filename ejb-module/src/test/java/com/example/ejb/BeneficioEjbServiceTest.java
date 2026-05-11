@@ -83,6 +83,20 @@ class BeneficioEjbServiceTest {
     }
 
     @Test
+    @DisplayName("transfer com saldo insuficiente deve mostrar nome do beneficio e valor BRL")
+    void transferMensagemSaldoInsuficiente() {
+        when(em.find(Beneficio.class, 1L, LockModeType.PESSIMISTIC_WRITE)).thenReturn(from);
+        when(em.find(Beneficio.class, 2L, LockModeType.PESSIMISTIC_WRITE)).thenReturn(to);
+
+        assertThatThrownBy(() -> service.transfer(1L, 2L, new BigDecimal("9999.00")))
+                .isInstanceOf(InsufficientBalanceException.class)
+                .hasMessageContaining("Origem")
+                .hasMessageContaining("R$ 1.000,00")
+                .hasMessageContaining("R$ 9.999,00")
+                .hasMessageNotContaining("id=");
+    }
+
+    @Test
     @DisplayName("transfer deve falhar quando amount eh zero")
     void transferFalhaAmountZero() {
         assertThatThrownBy(() -> service.transfer(1L, 2L, BigDecimal.ZERO))
@@ -123,7 +137,7 @@ class BeneficioEjbServiceTest {
     }
 
     @Test
-    @DisplayName("transfer deve falhar quando origem esta inativa")
+    @DisplayName("transfer deve falhar quando origem esta inativa, mostrando o nome")
     void transferFalhaOrigemInativa() {
         from.setAtivo(false);
         when(em.find(Beneficio.class, 1L, LockModeType.PESSIMISTIC_WRITE)).thenReturn(from);
@@ -131,11 +145,13 @@ class BeneficioEjbServiceTest {
 
         assertThatThrownBy(() -> service.transfer(1L, 2L, new BigDecimal("10.00")))
                 .isInstanceOf(InvalidTransferException.class)
-                .hasMessageContaining("inativo");
+                .hasMessageContaining("Origem")
+                .hasMessageContaining("inativo")
+                .hasMessageNotContaining("id=");
     }
 
     @Test
-    @DisplayName("transfer deve falhar quando destino esta inativo")
+    @DisplayName("transfer deve falhar quando destino esta inativo, mostrando o nome")
     void transferFalhaDestinoInativo() {
         to.setAtivo(false);
         when(em.find(Beneficio.class, 1L, LockModeType.PESSIMISTIC_WRITE)).thenReturn(from);
@@ -143,6 +159,8 @@ class BeneficioEjbServiceTest {
 
         assertThatThrownBy(() -> service.transfer(1L, 2L, new BigDecimal("10.00")))
                 .isInstanceOf(InvalidTransferException.class)
-                .hasMessageContaining("inativo");
+                .hasMessageContaining("Destino")
+                .hasMessageContaining("inativo")
+                .hasMessageNotContaining("id=");
     }
 }

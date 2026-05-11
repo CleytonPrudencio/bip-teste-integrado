@@ -48,7 +48,7 @@ public class BeneficioEjbService {
         ensureAtivo(to);
 
         if (from.getValor().compareTo(normalized) < 0) {
-            throw new InsufficientBalanceException(from.getId(), from.getValor(), normalized);
+            throw new InsufficientBalanceException(from.getNome(), from.getValor(), normalized);
         }
 
         from.setValor(from.getValor().subtract(normalized).setScale(2, RoundingMode.HALF_UP));
@@ -57,19 +57,21 @@ public class BeneficioEjbService {
 
     private void validate(Long fromId, Long toId, BigDecimal amount) {
         if (fromId == null || toId == null) {
-            throw new InvalidTransferException("fromId e toId sao obrigatorios");
+            throw new InvalidTransferException("Selecione o beneficio de origem e o de destino.");
         }
         if (fromId.equals(toId)) {
-            throw new InvalidTransferException("origem e destino devem ser diferentes");
+            throw new InvalidTransferException("Origem e destino devem ser beneficios diferentes.");
         }
         if (amount == null || amount.signum() <= 0) {
-            throw new InvalidTransferException("amount deve ser maior que zero");
+            throw new InvalidTransferException("Informe um valor maior que zero para a transferencia.");
         }
     }
 
     private void ensureAtivo(Beneficio beneficio) {
         if (!Boolean.TRUE.equals(beneficio.getAtivo())) {
-            throw new InvalidTransferException("beneficio inativo: id=" + beneficio.getId());
+            throw new InvalidTransferException(
+                    String.format("Beneficio \"%s\" esta inativo.", beneficio.getNome())
+            );
         }
     }
 }

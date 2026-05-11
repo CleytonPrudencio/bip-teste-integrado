@@ -78,7 +78,7 @@ class BeneficioServiceTest {
 
         assertThatThrownBy(() -> service.findById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("99");
+                .hasMessageContaining("nao encontrado");
     }
 
     @Test

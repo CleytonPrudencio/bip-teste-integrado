@@ -34,19 +34,24 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class})
     public ResponseEntity<Map<String, Object>> handleOptimisticLock(Exception ex) {
-        return build(HttpStatus.CONFLICT, "Registro alterado por outra transacao. Tente novamente.");
+        return build(HttpStatus.CONFLICT,
+                "Esse beneficio foi alterado em outra sessao. Recarregue a pagina e tente novamente.");
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
-        return build(HttpStatus.CONFLICT, "Violacao de integridade de dados.");
+        return build(HttpStatus.CONFLICT, "Nao foi possivel concluir a operacao por restricao de dados.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         String detail = ex.getBindingResult().getFieldErrors().stream()
-                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .map(fe -> fe.getDefaultMessage())
+                .filter(msg -> msg != null && !msg.isBlank())
                 .collect(Collectors.joining("; "));
+        if (detail.isBlank()) {
+            detail = "Dados invalidos. Verifique os campos preenchidos.";
+        }
         return build(HttpStatus.BAD_REQUEST, detail);
     }
 

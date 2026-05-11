@@ -71,19 +71,25 @@ public class TransferService {
         Long firstId = Math.min(fromId, toId);
         Long secondId = Math.max(fromId, toId);
 
-        Beneficio first = repository.findByIdForUpdate(firstId)
-                .orElseThrow(() -> ResourceNotFoundException.ofBeneficio(firstId));
-        Beneficio second = repository.findByIdForUpdate(secondId)
-                .orElseThrow(() -> ResourceNotFoundException.ofBeneficio(secondId));
+        Beneficio first = repository.findByIdForUpdate(firstId).orElse(null);
+        Beneficio second = repository.findByIdForUpdate(secondId).orElse(null);
+
+        if (first == null || second == null) {
+            boolean originMissing = (fromId.equals(firstId) && first == null) ||
+                    (fromId.equals(secondId) && second == null);
+            throw originMissing
+                    ? ResourceNotFoundException.ofBeneficioOrigem()
+                    : ResourceNotFoundException.ofBeneficioDestino();
+        }
 
         Beneficio from = fromId.equals(first.getId()) ? first : second;
         Beneficio to = toId.equals(first.getId()) ? first : second;
 
-        ensureAtivo(from);
-        ensureAtivo(to);
+        ensureAtivo(from, "origem");
+        ensureAtivo(to, "destino");
 
         if (from.getValor().compareTo(amount) < 0) {
-            throw new InsufficientBalanceException(from.getId(), from.getValor(), amount);
+            throw new InsufficientBalanceException(from.getNome(), from.getValor(), amount);
         }
 
         from.setValor(from.getValor().subtract(amount).setScale(2, RoundingMode.HALF_UP));
@@ -108,22 +114,24 @@ public class TransferService {
 
     private void validateRequest(TransferRequest request) {
         if (request == null) {
-            throw new InvalidTransferException("requisicao obrigatoria");
+            throw new InvalidTransferException("Requisicao de transferencia invalida.");
         }
         if (request.fromId() == null || request.toId() == null) {
-            throw new InvalidTransferException("fromId e toId obrigatorios");
+            throw new InvalidTransferException("Selecione o beneficio de origem e o de destino.");
         }
         if (request.fromId().equals(request.toId())) {
-            throw new InvalidTransferException("origem e destino devem ser diferentes");
+            throw new InvalidTransferException("Origem e destino devem ser beneficios diferentes.");
         }
         if (request.amount() == null || request.amount().signum() <= 0) {
-            throw new InvalidTransferException("amount deve ser maior que zero");
+            throw new InvalidTransferException("Informe um valor maior que zero para a transferencia.");
         }
     }
 
-    private void ensureAtivo(Beneficio beneficio) {
+    private void ensureAtivo(Beneficio beneficio, String papel) {
         if (!Boolean.TRUE.equals(beneficio.getAtivo())) {
-            throw new InvalidTransferException("beneficio inativo: id=" + beneficio.getId());
+            throw new InvalidTransferException(
+                    String.format("Beneficio de %s \"%s\" esta inativo.", papel, beneficio.getNome())
+            );
         }
     }
 }

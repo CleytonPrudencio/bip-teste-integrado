@@ -115,10 +115,17 @@ export class BeneficioFormComponent implements OnInit {
     if (!control || !control.touched || control.valid) {
       return null;
     }
-    if (control.hasError('required')) return 'Campo obrigatorio';
-    if (control.hasError('maxlength')) return 'Tamanho maximo excedido';
-    if (control.hasError('min')) return 'Valor deve ser maior ou igual a zero';
-    return 'Valor invalido';
+    if (control.hasError('required')) {
+      return field === 'nome' ? 'Informe o nome do beneficio.' :
+             field === 'valor' ? 'Informe o valor do beneficio.' :
+             'Campo obrigatorio.';
+    }
+    if (control.hasError('maxlength')) {
+      const max = control.getError('maxlength')?.requiredLength;
+      return `Maximo de ${max} caracteres.`;
+    }
+    if (control.hasError('min')) return 'Valor deve ser maior ou igual a zero.';
+    return 'Valor invalido.';
   }
 
   salvar(): void {
